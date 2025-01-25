@@ -1,42 +1,39 @@
-# Terraform провайдер для управления DNS записями на reg.ru
+# Terraform provider for managing DNS records on reg.ru
 
-Этот проект содержит Terraform провайдер для управления DNS записями с использованием API reg.ru. Провайдер позволяет создавать, читать и удалять различные типы DNS записей, включая A, AAAA, CNAME, MX и TXT.
+This project contains a Terraform provider for managing DNS records using the reg.ru API. The provider allows you to create, read, and delete various types of DNS records, including A, AAAA, CNAME, MX, and TXT.
 
-## Установка
+## Installation
 
-Для использования этого провайдера вам необходимо установить Terraform версии 0.12 или выше. Вы можете скачать Terraform с [официального сайта](https://www.terraform.io/downloads.html).
+To use this provider, you need to have Terraform version 0.12 or higher installed. You can download Terraform from the official website(https://www.terraform.io/downloads.html).
 
-## Конфигурация
+## Development and Build
 
-1. **Создайте файл переменных**:
+1. **Create a Dockerfile**:
+```dockerfile
+FROM golang:1.20
 
-    Создайте файл `variables.tf` и добавьте следующие переменные:
+RUN apt-get update && apt-get install -y make git && rm -rf /var/lib/apt/lists/*
 
-    ```hcl
-    variable "username" {
-      description = "Username for the reg.ru API"
-      default     = "my_username"
-    }
+RUN git clone https://github.com/cyberbob61/terraform-provider-regru.git /app && \
+    cd /app && \
+    make install-deps && \
+    make build
 
-    variable "password" {
-      description = "Password for the reg.ru API"
-      default     = "my_password"
-    }
+```
 
-    variable "cert_file" {
-      description = "Path to the client SSL certificate file"
-      default     = "./my.crt"
-    }
+2. **Check**:
 
-    variable "key_file" {
-      description = "Path to the client SSL key file"
-      default     = "./my.key"
-    }
+    Verify that the built provider is located in the correct directory:
+
+    ```sh
+    ls ~/.terraform.d/plugins/registry.terraform.io/cyberbob61/regru/0.2.1/linux_amd64/
     ```
+   
+## Configuration
 
-2. **Создайте основной конфигурационный файл**:
+1. **Configuration**:
 
-    Создайте файл `main.tf` с основной конфигурацией для провайдера и ресурсов:
+    Create a configuration file for example `main.tf`:
 
     ```hcl
     terraform {
@@ -49,24 +46,24 @@
     }
 
     provider "regru" {
-      api_username = var.username
-      api_password = var.password
-      cert_file    = var.cert_file
-      key_file     = var.key_file
+      api_username = "<username>"
+      api_password = "<password>"
+      cert_file    = "cert.crt"
+      key_file     = "key.crt"
     }
 
     resource "regru_dns_record" "example_com" {
       zone   = "example.com"
       name   = "@"
       type   = "A"
-      record = "185.199.108.153"
+      record = "1.1.1.1"
     }
 
     resource "regru_dns_record" "example_com_ipv6" {
       zone   = "example.com"
       name   = "@"
       type   = "AAAA"
-      record = "2606:2800:220:1:248:1893:25c8:1946"
+      record = "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
     }
 
     resource "regru_dns_record" "example_com_mx" {
@@ -84,67 +81,12 @@
     }
     ```
 
-3. **Инициализация Terraform**:
-
-    В каталоге с конфигурационными файлами выполните команду:
+3. **Terraform actions**:
 
     ```sh
     terraform init
-    ```
-
-4. **Планирование конфигурации**:
-
-    Перед применением конфигурации рекомендуется выполнить команду `terraform plan`, чтобы увидеть, какие изменения будут внесены:
-
-    ```sh
     terraform plan
-    ```
-
-    Эта команда покажет, какие ресурсы будут созданы, изменены или удалены.
-
-5. **Применение конфигурации**:
-
-    Для создания указанных ресурсов выполните команду:
-
-    ```sh
     terraform apply
-    ```
-
-## Разработка и сборка
-
-Для сборки проекта используется `Makefile`. Убедитесь, что у вас установлен Go.
-
-### Шаги по сборке проекта
-
-1. **Клонируйте репозиторий**:
-
-    ```sh
-    git clone https://github.com/yourusername/terraform-regru.git
-    cd terraform-regru
-    ```
-
-2. **Установите зависимости**:
-
-    Выполните команду для установки всех зависимостей:
-
-    ```sh
-    make install-deps
-    ```
-
-3. **Соберите провайдер**:
-
-    Выполните команду для сборки провайдера:
-
-    ```sh
-    make build
-    ```
-
-4. **Убедитесь, что провайдер установлен правильно**:
-
-    Проверьте, что собранный провайдер находится в правильной директории:
-
-    ```sh
-    ls ~/.terraform.d/plugins/registry.terraform.io/letenkov/regru/0.2.1/$(go env GOOS)_$(go env GOARCH)/
     ```
 
 ## Лицензия
