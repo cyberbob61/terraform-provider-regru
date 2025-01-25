@@ -22,20 +22,17 @@ RUN apt-get update && apt-get install -y make git && rm -rf /var/lib/apt/lists/*
 RUN git clone -b dev https://github.com/cyberbob61/terraform-provider-regru.git /app && \
     cd /app && \
     make install-deps && \
-    make build
+    make build 
 ```
-Build it
+
+Build it and copy
 ```bash
-docker build -t terraform-provider-regru . && docker run -it terraform-provider-regru bash
+docker build --no-cache -t terraform-provider-regru .
+docker run -d --name terraform-provider-regru terraform-provider-regru && docker cp terraform-provider-regru:/app/out/terraform-provider-regru $(pwd)
+
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/trideci/regru/0.3.0/linux_amd64/
+mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/trideci/regru/0.3.0/linux_amd64/
 ```
-
-2. **Check**:
-
-    Verify that the built provider is located in the correct directory:
-
-    ```sh
-    ls ~/.terraform.d/plugins/registry.terraform.io/cyberbob61/regru/0.2.1/linux_amd64/
-    ```
    
 ## Configuration
 
@@ -47,8 +44,8 @@ docker build -t terraform-provider-regru . && docker run -it terraform-provider-
     terraform {
       required_providers {
         regru = {
-          version = "~>0.2.0"
-          source  = "letenkov/regru"
+          version = "~>0.3.0"
+          source  = "trideci/regru"
         }
       }
     }
