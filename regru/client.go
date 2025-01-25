@@ -1,7 +1,6 @@
 package regru
 
 import (
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -72,14 +71,17 @@ func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error
 		return nil, fmt.Errorf("failed to create input data: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(inputData))
+	query := endpoint.Query()
+	query.Add("input_data", string(inputData))
+	query.Add("input_format", "json")
+	endpoint.RawQuery = query.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, endpoint.String(), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	httpClient := c.HTTPClient
-	resp, err := httpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
