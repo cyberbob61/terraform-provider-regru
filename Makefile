@@ -3,8 +3,9 @@ VERSION := 0.2.1
 
 # Определение пути для установки плагина
 OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH)
+PLUGIN_DIR := /out
 PLUGIN_NAME := terraform-provider-regru
-BUILD_OUTPUT := $(PLUGIN_NAME)
+BUILD_OUTPUT := $(PLUGIN_DIR)/$(PLUGIN_NAME)
 
 # Компиляция и установка провайдера
 .PHONY: build
