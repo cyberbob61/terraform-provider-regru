@@ -4,7 +4,7 @@ VERSION := 0.2.1
 # Определение пути для установки плагина
 OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH)
 PLUGIN_DIR := $(HOME)/.terraform.d/plugins/registry.terraform.io/letenkov/regru/$(VERSION)/$(OS_ARCH)
-PLUGIN_NAME := terraform-provider-regru_v$(VERSION)
+PLUGIN_NAME := terraform-provider-regru
 BUILD_OUTPUT := $(PLUGIN_DIR)/$(PLUGIN_NAME)
 
 # Компиляция и установка провайдера
