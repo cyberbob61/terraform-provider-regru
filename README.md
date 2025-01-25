@@ -39,7 +39,6 @@ mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/trideci
 1. **Configuration**:
 
     Create a configuration file for example `main.tf`:
-
     ```hcl
     terraform {
       required_providers {
@@ -86,7 +85,7 @@ mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/trideci
     }
     ```
 
-3. **Terraform actions**:
+2. **Terraform actions**:
 
     ```sh
     terraform init
@@ -96,4 +95,4 @@ mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/trideci
 
 ## Лицензия
 
-Этот проект лицензируется на условиях лицензии Apache 2.0. Подробнее см. в файле [LICENSE](LICENSE).
+This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for more details.
