@@ -79,15 +79,59 @@ terraform {
 terraform init
 ```
 
-3. **Terraform configuration examples**:
-Add to `main.tf`
+You have to see:
+```
+terraform init
+Initializing the backend...
+Initializing provider plugins...
+- Reusing previous version of murtll/regru from the dependency lock file
+- Using previously-installed murtll/regru v0.3.0
 
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+```
+
+## Deploy
+
+1. **REG.ru preparations**
+
+api_username - use your email. You can find it here https://www.reg.ru/user/account/#/settings/
+
+api_password - create an alternative password here https://www.reg.ru/user/account/#/settings/api/
+
+cert_file and key_file - can be generated using a guide from here https://www.reg.ru/user/account/#/settings/api/
+```bash
+openssl req -new -x509 -nodes -sha1 -days 365 -newkey rsa:2048 -keyout my.key -out my.crt
+```
+
+for instance:
+```
+Country Name (2 letter code) [AU]:RU
+State or Province Name (full name) [Some-State]:
+Locality Name (eg, city) []:
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+Organizational Unit Name (eg, section) []:
+Common Name (e.g. server FQDN or YOUR name) []:
+Email Address []:
+```
+
+You have to copy the content of `my.crt` to https://www.reg.ru/user/account/#/settings/api/
+
+2. **Terraform configuration examples**:
+Add to `main.tf`
 ```hcl
 provider "regru" {
    api_username = "<username>"
    api_password = "<password>"
-   cert_file    = "cert.crt"
-   key_file     = "key.crt"
+   cert_file    = "my.crt"
+   key_file     = "my.key"
 }   
    
 resource "regru_dns_record" "example_com" {
@@ -119,7 +163,7 @@ resource "regru_dns_record" "example_com_txt" {
 }
 ```
 
-4. **Terraform actions**:
+3. **Terraform actions**:
 
 ```sh
 terraform plan
