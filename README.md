@@ -37,6 +37,11 @@ docker run -d --name terraform-provider-regru terraform-provider-regru && docker
 mkdir -p ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
 mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
 ```
+
+4. ** Optional: if the case is that the provider should be upgraded
+```bash
+rm -f .terraform.lock.hcl
+```
    
 ## Configuration
 
