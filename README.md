@@ -8,17 +8,25 @@ To use this provider, you need to have Terraform version 0.12 or higher installe
 
 ## Development and Build
 
-1. **Create a Dockerfile**:
+1. **Build**:
+Create a file with a name `Dockerfile` 
+ ```bash
+   touch Dockerfile
+ ```
+Open a file in any text editor and add:
 ```dockerfile
 FROM golang:1.20
 
 RUN apt-get update && apt-get install -y make git && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/cyberbob61/terraform-provider-regru.git /app && \
+RUN git clone -b dev https://github.com/cyberbob61/terraform-provider-regru.git /app && \
     cd /app && \
     make install-deps && \
     make build
-
+```
+Build it
+```bash
+docker build -t terraform-provider-regru . && docker run -it terraform-provider-regru bash
 ```
 
 2. **Check**:
