@@ -54,6 +54,7 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	var request interface{}
+	var action string
 
 	switch strings.ToUpper(record_type) {
 	case "A":
@@ -61,16 +62,22 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 			CreateRecordRequest: baseRequest,
 			IPAddr:              value,
 		}
+		action = "add_alias"
+
 	case "AAAA":
 		request = CreateAAAARecordRequest{
 			CreateRecordRequest: baseRequest,
 			IPAddr:              value,
 		}
+		action = "add_alias_ipv6"
+
 	case "CNAME":
 		request = CreateCnameRecordRequest{
 			CreateRecordRequest: baseRequest,
 			CanonicalName:       value,
 		}
+		action = "add_cname"
+
 	case "MX":
 		fields := strings.Fields(value)
 		if len(fields) != 2 {
@@ -81,18 +88,15 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 			MailServer:          fields[1],
 			Priority:            fields[0],
 		}
+		action = "add_mx"
 	case "TXT":
 		request = CreateTxtRecordRequest{
 			CreateRecordRequest: baseRequest,
 			Text:                value,
 		}
+		action = "add_txt"
 	default:
 		return fmt.Errorf("invalid record type '%s'", record_type)
-	}
-
-	action := fmt.Sprintf("add_%s", strings.ToLower(record_type))
-	if strings.ToLower(record_type) == "a" {
-		action = "add_alias"
 	}
 
 	resp, err := c.doRequest(request, "zone", action)
@@ -106,7 +110,9 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceRegruDNSRecordRead(d *schema.ResourceData, m interface{}) error {
+func resourceRegruDNSRecordRead(_ *schema.ResourceData, _ interface{}) error {
+	// Placeholder: function not implemented yet
+	// func resourceRegruDNSRecordRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
