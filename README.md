@@ -11,6 +11,7 @@ To use this provider, you need to have Terraform version 0.12 or higher installe
 1. **Build**:
 Create a file with a name `Dockerfile` 
 ```bash
+mkdir ~/temp && cd ~/temp
 touch Dockerfile
 ```
 Open a file in any text editor and add:
@@ -25,11 +26,14 @@ RUN git clone -b dev https://github.com/cyberbob61/terraform-provider-regru.git 
     make build 
 ```
 
-Build it and copy
+2. **Build**
 ```bash
 docker build --no-cache -t terraform-provider-regru .
 docker run -d --name terraform-provider-regru terraform-provider-regru && docker cp terraform-provider-regru:/app/out/terraform-provider-regru $(pwd) && docker rm terraform-provider-regru
+```
 
+3. **Copy the provider**
+```bash
 mkdir -p ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
 mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
 ```
@@ -69,13 +73,13 @@ terraform {
 }
 ```
 
-3. **Testing provider**:
+2. **Testing provider**:
 
 ```sh
 terraform init
 ```
 
-4. **Terraform configuration examples**:
+3. **Terraform configuration examples**:
 Add to `main.tf`
 
 ```hcl
@@ -115,12 +119,12 @@ resource "regru_dns_record" "example_com_txt" {
 }
 ```
 
-5. **Terraform actions**:
+4. **Terraform actions**:
 
 ```sh
 terraform plan
 terraform apply
 ```
-## Лицензия
+## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for more details.
