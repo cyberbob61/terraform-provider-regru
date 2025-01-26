@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -107,6 +108,46 @@ func NewClient(username, password, apiEndpoint, certFile, keyFile string) (*Clie
 //	return &apiResp, nil
 //}
 
+//func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error) {
+//	endpoint := c.baseURL.JoinPath(fragments...)
+//
+//	inputData, err := json.Marshal(request)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to create input data: %w", err)
+//	}
+//
+//	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(inputData))
+//	if err != nil {
+//		return nil, fmt.Errorf("unable to create request: %w", err)
+//	}
+//
+//	req.Header.Set("Content-Type", "application/json")
+//	httpClient := c.HTTPClient
+//	resp, err := httpClient.Do(req)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	defer func() { _ = resp.Body.Close() }()
+//
+//	if resp.StatusCode/100 != 2 {
+//		return nil, parseError(req, resp)
+//	}
+//
+//	raw, err := io.ReadAll(resp.Body)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	var apiResp APIResponse
+//	err = json.Unmarshal(raw, &apiResp)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return &apiResp, nil
+//}
+
 func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error) {
 	endpoint := c.baseURL.JoinPath(fragments...)
 
@@ -120,6 +161,8 @@ func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error
 		return nil, fmt.Errorf("unable to create request: %w", err)
 	}
 
+	log.Printf("Request: %s %s\nHeaders: %v\nBody: %s", http.MethodPost, endpoint.String(), req.Header, string(inputData))
+
 	req.Header.Set("Content-Type", "application/json")
 	httpClient := c.HTTPClient
 	resp, err := httpClient.Do(req)
@@ -129,13 +172,16 @@ func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error
 
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode/100 != 2 {
-		return nil, parseError(req, resp)
-	}
-
+	log.Printf("Response Status: %s\nHeaders: %v", resp.Status, resp.Header)
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	log.Printf("Response Body: %s", string(raw))
+
+	if resp.StatusCode/100 != 2 {
+		return nil, parseError(req, resp)
 	}
 
 	var apiResp APIResponse
