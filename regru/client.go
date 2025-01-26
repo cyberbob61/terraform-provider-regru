@@ -157,10 +157,10 @@ func (c Client) doRequest(request any, path ...string) (*APIResponse, error) {
 		return nil, fmt.Errorf("unable to create request: %w", err)
 	}
 
-	log.Printf("Request: %s %s\nHeaders: %v\nBody: %s", http.MethodPost, endpoint.String(), req.Header, string(inputData))
+	//req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	log.Printf("Request: %s %s\nHeaders: %v\nBody: %s", http.MethodPost, endpoint.String(), req.Header, string(inputData))
 
 	httpClient := c.HTTPClient
 	resp, err := httpClient.Do(req)
@@ -170,7 +170,6 @@ func (c Client) doRequest(request any, path ...string) (*APIResponse, error) {
 
 	defer func() { _ = resp.Body.Close() }()
 
-	log.Printf("Response Status: %s\nHeaders: %v", resp.Status, resp.Header)
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
