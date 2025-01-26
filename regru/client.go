@@ -1,13 +1,13 @@
 package regru
 
 import (
-	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -107,32 +107,74 @@ func NewClient(username, password, apiEndpoint, certFile, keyFile string) (*Clie
 //	return &apiResp, nil
 //}
 
-func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error) {
+//func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error) {
+//	endpoint := c.baseURL.JoinPath(fragments...)
+//
+//	inputData, err := json.Marshal(request)
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to create input data: %w", err)
+//	}
+//
+//	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(inputData))
+//	if err != nil {
+//		return nil, fmt.Errorf("unable to create request: %w", err)
+//	}
+//
+//	req.Header.Set("Content-Type", "application/json")
+//	httpClient := c.HTTPClient
+//	resp, err := httpClient.Do(req)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	defer func() { _ = resp.Body.Close() }()
+//
+//	if resp.StatusCode/100 != 2 {
+//		return nil, parseError(req, resp)
+//	}
+//
+//	raw, err := io.ReadAll(resp.Body)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	var apiResp APIResponse
+//	err = json.Unmarshal(raw, &apiResp)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return &apiResp, nil
+//}
+
+func (c Client) doRequest(formData map[string]string, fragments ...string) (*APIResponse, error) {
+	// Построение URL
 	endpoint := c.baseURL.JoinPath(fragments...)
 
-	inputData, err := json.Marshal(request)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create input data: %w", err)
+	// Преобразование map[string]string в form-urlencoded
+	data := url.Values{}
+	for key, value := range formData {
+		data.Set(key, value)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint.String(), bytes.NewReader(inputData))
+	// Создание HTTP-запроса
+	req, err := http.NewRequest(http.MethodPost, endpoint.String(), strings.NewReader(data.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	// Установка заголовка Content-Type
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Выполнение запроса
 	httpClient := c.HTTPClient
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode/100 != 2 {
-		return nil, parseError(req, resp)
-	}
-
+	// Обработка ответа
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
