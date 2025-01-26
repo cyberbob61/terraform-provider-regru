@@ -161,10 +161,10 @@ func (c Client) doRequest(request any, path ...string) (*APIResponse, error) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	log.Printf("Request: ----start-----")
-	log.Printf("Method: ", http.MethodPost)
-	log.Printf("Endpoint: ", endpoint.String())
-	log.Printf("Header: ", req.Header)
-	log.Printf("Input: ", string(inputData))
+	log.Printf("Method: %s", http.MethodPost)
+	log.Printf("Endpoint: %s", endpoint.String())
+	log.Printf("Header: %s", req.Header)
+	log.Printf("Input: %s", string(inputData))
 	log.Printf("Request: ---end------")
 
 	httpClient := c.HTTPClient
