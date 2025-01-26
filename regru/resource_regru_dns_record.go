@@ -95,7 +95,7 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("invalid record type '%s'", record_type)
 	}
 
-	resp, err := c.doRequest(request, "zone")
+	resp, err := c.doRequest(request, "")
 	if err != nil {
 		return err
 	}

@@ -37,10 +37,6 @@ func loadTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 }
 
 func NewClient(username, password, apiEndpoint, certFile, keyFile string) (*Client, error) {
-	if apiEndpoint == "" {
-		apiEndpoint = defaultApiEndpoint
-	}
-
 	baseURL, err := url.Parse(apiEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse API endpoint: %w", err)
@@ -148,8 +144,8 @@ func NewClient(username, password, apiEndpoint, certFile, keyFile string) (*Clie
 //	return &apiResp, nil
 //}
 
-func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error) {
-	endpoint := c.baseURL.JoinPath(fragments...)
+func (c Client) doRequest(request any, path ...string) (*APIResponse, error) {
+	endpoint := c.baseURL.JoinPath(path...)
 
 	inputData, err := json.Marshal(request)
 	if err != nil {
