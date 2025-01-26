@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-const defaultApiEndpoint = "https://cac0394850398/api"
+const defaultApiEndpoint = "https://api.reg.ru/api/regru2/"
 
 func Provider() *schema.Provider {
 	return &schema.Provider{
