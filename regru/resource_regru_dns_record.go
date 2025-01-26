@@ -54,7 +54,6 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	var request interface{}
-	var action string
 
 	switch strings.ToUpper(record_type) {
 	case "A":
@@ -62,7 +61,6 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 			CreateRecordRequest: baseRequest,
 			IPAddr:              value,
 		}
-		action = "add_alias"
 		d.Set("api_endpoint", "https://api.reg.ru/api/regru2/zone/add_alias")
 
 	case "AAAA":
@@ -70,14 +68,12 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 			CreateRecordRequest: baseRequest,
 			IPAddr:              value,
 		}
-		action = "add_alias_ipv6"
 
 	case "CNAME":
 		request = CreateCnameRecordRequest{
 			CreateRecordRequest: baseRequest,
 			CanonicalName:       value,
 		}
-		action = "add_cname"
 
 	case "MX":
 		fields := strings.Fields(value)
@@ -89,20 +85,18 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 			MailServer:          fields[1],
 			Priority:            fields[0],
 		}
-		action = "add_mx"
 
 	case "TXT":
 		request = CreateTxtRecordRequest{
 			CreateRecordRequest: baseRequest,
 			Text:                value,
 		}
-		action = "add_txt"
 
 	default:
 		return fmt.Errorf("invalid record type '%s'", record_type)
 	}
 
-	resp, err := c.doRequest(request, "zone", action)
+	resp, err := c.doRequest(request, "zone")
 	if err != nil {
 		return err
 	}
