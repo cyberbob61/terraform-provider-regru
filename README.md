@@ -26,19 +26,15 @@ RUN git clone -b dev https://github.com/cyberbob61/terraform-provider-regru.git 
     make build 
 ```
 
-2. **Build**
+2. **Build and copy the provider**
 ```bash
 docker build --no-cache -t terraform-provider-regru .
 docker run -d --name terraform-provider-regru terraform-provider-regru && docker cp terraform-provider-regru:/app/out/terraform-provider-regru $(pwd) && docker rm terraform-provider-regru
-```
-
-3. **Copy the provider**
-```bash
 mkdir -p ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
 mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
 ```
 
-4. ** Optional: if the case is that the provider should be upgraded
+3** Optional: if the case is that the provider should be upgraded
 ```bash
 rm -f .terraform.lock.hcl
 ```
@@ -174,6 +170,11 @@ resource "regru_dns_record" "example_com_txt" {
 terraform plan
 terraform apply
 ```
+
+## API Document used
+
+https://www.reg.ru/reseller/api2doc
+
 ## License
 
 This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for more details.
