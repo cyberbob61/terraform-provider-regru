@@ -61,7 +61,7 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 			CreateRecordRequest: baseRequest,
 			IPAddr:              value,
 		}
-		d.Set("api_endpoint", "https://api.reg.ru/api/regru2/zone/add_alias")
+		d.Set("api_endpoint", "https://supertest123/")
 
 	case "AAAA":
 		request = CreateAAAARecordRequest{
