@@ -42,7 +42,7 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 	record_type := d.Get("type").(string)
 	record_name := d.Get("name").(string)
 	value := d.Get("record").(string)
-	zone := d.Get("zone/add_alias").(string)
+	zone := d.Get("zone").(string)
 
 	c := m.(*Client)
 	baseRequest := CreateRecordRequest{
@@ -102,7 +102,7 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 	if resp.HasError() != nil {
 		return resp.HasError()
 	}
-
+	d.SetId(strings.Join([]string{record_name, zone}, "."))
 	return nil
 }
 
