@@ -1,152 +1,180 @@
-# Terraform провайдер для управления DNS записями на reg.ru
+# Terraform provider for managing DNS records on reg.ru
 
-Этот проект содержит Terraform провайдер для управления DNS записями с использованием API reg.ru. Провайдер позволяет создавать, читать и удалять различные типы DNS записей, включая A, AAAA, CNAME, MX и TXT.
+This project contains a Terraform provider for managing DNS records using the reg.ru API. The provider allows you to create, read, and delete various types of DNS records, including A, AAAA, CNAME, MX, and TXT.
 
-## Установка
+## Installation
 
-Для использования этого провайдера вам необходимо установить Terraform версии 0.12 или выше. Вы можете скачать Terraform с [официального сайта](https://www.terraform.io/downloads.html).
+To use this provider, you need to have Terraform version 0.12 or higher installed. You can download Terraform from the official website(https://www.terraform.io/downloads.html).
 
-## Конфигурация
+## Development and Build
 
-1. **Создайте файл переменных**:
+1. **Build**:
+Create a file with a name `Dockerfile` 
+```bash
+mkdir ~/temp && cd ~/temp
+touch Dockerfile
+```
+Open a file in any text editor and add:
+```dockerfile
+FROM golang:1.20
 
-    Создайте файл `variables.tf` и добавьте следующие переменные:
+RUN apt-get update && apt-get install -y make git && rm -rf /var/lib/apt/lists/*
 
-    ```hcl
-    variable "username" {
-      description = "Username for the reg.ru API"
-      default     = "my_username"
-    }
+RUN git clone -b dev https://github.com/cyberbob61/terraform-provider-regru.git /app && \
+    cd /app && \
+    make install-deps && \
+    make build 
+```
 
-    variable "password" {
-      description = "Password for the reg.ru API"
-      default     = "my_password"
-    }
+2. **Build and copy the provider**
+```bash
+docker build --no-cache -t terraform-provider-regru .
+docker run -d --name terraform-provider-regru terraform-provider-regru && docker cp terraform-provider-regru:/app/out/terraform-provider-regru $(pwd) && docker rm terraform-provider-regru
+mkdir -p ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
+mv terraform-provider-regru ~/.terraform.d/plugins/registry.terraform.io/murtll/regru/0.3.0/linux_amd64/
+```
 
-    variable "cert_file" {
-      description = "Path to the client SSL certificate file"
-      default     = "./my.crt"
-    }
+3** Optional: if the case is that the provider should be upgraded
+```bash
+rm -f .terraform.lock.hcl
+```
+   
+## Configuration
 
-    variable "key_file" {
-      description = "Path to the client SSL key file"
-      default     = "./my.key"
-    }
-    ```
+1. **terraformrc configuration**:
 
-2. **Создайте основной конфигурационный файл**:
+Edit or create a file if it doesn't exist `~/.terraformrc`:
 
-    Создайте файл `main.tf` с основной конфигурацией для провайдера и ресурсов:
+```hcl
+provider_installation {
+  filesystem_mirror {
+    path    = "/home/<<USER>>/.terraform.d/plugins"
+    include = ["murtll/regru"]
+  }
+  direct {
+    exclude = ["murtll/regru"]
+  }
+}
+```
 
-    ```hcl
-    terraform {
-      required_providers {
-        regru = {
-          version = "~>0.2.0"
-          source  = "letenkov/regru"
-        }
-      }
-    }
 
-    provider "regru" {
-      api_username = var.username
-      api_password = var.password
-      cert_file    = var.cert_file
-      key_file     = var.key_file
-    }
+```sh
+sed -i "s/<<USER>>/$USER/g" ~/.terraformrc
+```
 
-    resource "regru_dns_record" "example_com" {
-      zone   = "example.com"
-      name   = "@"
-      type   = "A"
-      record = "185.199.108.153"
-    }
+Create a configuration file for example `main.tf`:
+```hcl
+terraform {
+  required_providers { 
+    regru = { 
+      version = "~>0.3.0"
+      source  = "murtll/regru"
+    } 
+  }
+}
+```
 
-    resource "regru_dns_record" "example_com_ipv6" {
-      zone   = "example.com"
-      name   = "@"
-      type   = "AAAA"
-      record = "2606:2800:220:1:248:1893:25c8:1946"
-    }
+2. **Testing provider**:
 
-    resource "regru_dns_record" "example_com_mx" {
-      zone   = "example.com"
-      name   = "@"
-      type   = "MX"
-      record = "10 mail.example.com"
-    }
+```sh
+terraform init
+```
 
-    resource "regru_dns_record" "example_com_txt" {
-      zone   = "example.com"
-      name   = "@"
-      type   = "TXT"
-      record = "v=spf1 include:example.com ~all"
-    }
-    ```
+You have to see:
+```
+terraform init
+Initializing the backend...
+Initializing provider plugins...
+- Reusing previous version of murtll/regru from the dependency lock file
+- Using previously-installed murtll/regru v0.3.0
 
-3. **Инициализация Terraform**:
+Terraform has been successfully initialized!
 
-    В каталоге с конфигурационными файлами выполните команду:
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
 
-    ```sh
-    terraform init
-    ```
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+```
 
-4. **Планирование конфигурации**:
+## Deploy
 
-    Перед применением конфигурации рекомендуется выполнить команду `terraform plan`, чтобы увидеть, какие изменения будут внесены:
+1. **REG.ru preparations**
 
-    ```sh
-    terraform plan
-    ```
+api_username - use your email. You can find it here https://www.reg.ru/user/account/#/settings/
 
-    Эта команда покажет, какие ресурсы будут созданы, изменены или удалены.
+api_password - create an alternative password here https://www.reg.ru/user/account/#/settings/api/
 
-5. **Применение конфигурации**:
+cert_file and key_file - can be generated using a guide from here https://www.reg.ru/user/account/#/settings/api/
+```bash
+openssl req -new -x509 -nodes -sha1 -days 365 -newkey rsa:2048 -keyout my.key -out my.crt
+```
 
-    Для создания указанных ресурсов выполните команду:
+for instance:
+```
+Country Name (2 letter code) [AU]:RU
+State or Province Name (full name) [Some-State]:
+Locality Name (eg, city) []:
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+Organizational Unit Name (eg, section) []:
+Common Name (e.g. server FQDN or YOUR name) []:
+Email Address []:
+```
 
-    ```sh
-    terraform apply
-    ```
+You have to copy the content of `my.crt` to https://www.reg.ru/user/account/#/settings/api/
 
-## Разработка и сборка
+2. **Terraform configuration examples**:
+Add to `main.tf`
+```hcl
+provider "regru" {
+   api_username = "<username>"
+   api_password = "<password>"
+   cert_file    = "my.crt"
+   key_file     = "my.key"
+}   
+   
+resource "regru_dns_record" "example_com" {
+   zone   = "example.com"
+   name   = "@"
+   type   = "A"
+   record = "1.1.1.1"
+}
 
-Для сборки проекта используется `Makefile`. Убедитесь, что у вас установлен Go.
+resource "regru_dns_record" "example_com_ipv6" {
+   zone   = "example.com"
+   name   = "@"
+   type   = "AAAA"
+   record = "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+}
 
-### Шаги по сборке проекта
+resource "regru_dns_record" "example_com_mx" {
+   zone   = "example.com"
+   name   = "@"
+   type   = "MX"
+   record = "10 mail.example.com"
+}
 
-1. **Клонируйте репозиторий**:
+resource "regru_dns_record" "example_com_txt" {
+   zone   = "example.com"
+   name   = "@"
+   type   = "TXT"
+   record = "v=spf1 include:example.com ~all"
+}
+```
 
-    ```sh
-    git clone https://github.com/yourusername/terraform-regru.git
-    cd terraform-regru
-    ```
+3. **Terraform actions**:
 
-2. **Установите зависимости**:
+```sh
+terraform plan
+terraform apply
+```
 
-    Выполните команду для установки всех зависимостей:
+## API Document used
 
-    ```sh
-    make install-deps
-    ```
+https://www.reg.ru/reseller/api2doc
 
-3. **Соберите провайдер**:
+## License
 
-    Выполните команду для сборки провайдера:
-
-    ```sh
-    make build
-    ```
-
-4. **Убедитесь, что провайдер установлен правильно**:
-
-    Проверьте, что собранный провайдер находится в правильной директории:
-
-    ```sh
-    ls ~/.terraform.d/plugins/registry.terraform.io/letenkov/regru/0.2.1/$(go env GOOS)_$(go env GOARCH)/
-    ```
-
-## Лицензия
-
-Этот проект лицензируется на условиях лицензии Apache 2.0. Подробнее см. в файле [LICENSE](LICENSE).
+This project is licensed under the Apache 2.0 License. See the [LICENSE](LICENSE) file for more details.

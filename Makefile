@@ -1,13 +1,13 @@
-# Версия провайдера
-VERSION := 0.2.1
+# Provider's version
+VERSION := 0.3.0
 
-# Определение пути для установки плагина
+# Defining the path to install the plugin
 OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH)
-PLUGIN_DIR := $(HOME)/.terraform.d/plugins/registry.terraform.io/letenkov/regru/$(VERSION)/$(OS_ARCH)
-PLUGIN_NAME := terraform-provider-regru_v$(VERSION)
+PLUGIN_DIR := /app/out
+PLUGIN_NAME := terraform-provider-regru
 BUILD_OUTPUT := $(PLUGIN_DIR)/$(PLUGIN_NAME)
 
-# Компиляция и установка провайдера
+# Compiling and installing the provider
 .PHONY: build
 build:
 	@echo "Building Terraform provider..."
@@ -15,47 +15,47 @@ build:
 	go build -o $(BUILD_OUTPUT)
 	@echo "Build completed and installed at $(BUILD_OUTPUT)"
 
-# Получение версии Go из go.mod
+# Getting version Go из go.mod
 .PHONY: go-version
 go-version:
 	@grep ^go go.mod | awk '{ print $$2 }'
 
-# Запуск тестов
+# Running tests
 .PHONY: test
 test:
 	@echo "Running tests..."
 	go test ./... -v
 	@echo "Tests completed"
 
-# Форматирование кода
+# Formatting code
 .PHONY: fmt
 fmt:
 	@echo "Formatting code..."
 	go fmt ./...
 	@echo "Code formatted"
 
-# Линтинг кода
+# Linting code
 .PHONY: lint
 lint:
 	@echo "Linting code..."
 	go vet ./...
 	@echo "Linting completed"
 
-# Очистка сборочных артефактов
+# Cleaning up build artifacts
 .PHONY: clean
 clean:
 	@echo "Cleaning up..."
 	rm -f $(BUILD_OUTPUT)
 	@echo "Cleanup completed"
 
-# Установка всех зависимостей
+# Installing all dependencies
 .PHONY: install-deps
 install-deps:
 	@echo "Installing dependencies..."
 	go mod tidy
 	@echo "Dependencies installed"
 
-# Помощь
+# Help
 .PHONY: help
 help:
 	@echo "Usage:"
