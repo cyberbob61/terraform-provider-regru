@@ -152,10 +152,46 @@ func resourceRegruDNSRecordRead(_ *schema.ResourceData, _ interface{}) error {
 //
 //		return resp.HasError()
 //	}
+//
+//	func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
+//		// Получаем данные из Terraform
+//		recordName := d.Get("name").(string)
+//		zone := d.Get("zone").(string)
+//
+//		// Получаем клиент из метаданных
+//		c := m.(*Client)
+//
+//		// Формируем запрос для удаления записи
+//		request := DeleteRecordRequest{
+//			Username:          c.username,
+//			Password:          c.password,
+//			Domains:           []Domain{{DName: zone}},
+//			SubDomain:         recordName,
+//			OutputContentType: "plain",
+//		}
+//
+//		// Выполняем запрос к API
+//		resp, err := c.doRequest(request, "zone", "remove_record") // Правильный путь
+//		if err != nil {
+//			return fmt.Errorf("failed to delete DNS record: %w", err)
+//		}
+//
+//		// Проверяем наличие ошибок в ответе
+//		if resp.HasError() != nil {
+//			return fmt.Errorf("API error: %w", resp.HasError())
+//		}
+//
+//		// Удаляем ID ресурса в Terraform
+//		d.SetId("")
+//
+//		return nil
+//	}
 func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
 	// Получаем данные из Terraform
 	recordName := d.Get("name").(string)
 	zone := d.Get("zone").(string)
+	recordType := d.Get("type").(string)
+	recordValue := d.Get("record").(string)
 
 	// Получаем клиент из метаданных
 	c := m.(*Client)
@@ -166,6 +202,8 @@ func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
 		Password:          c.password,
 		Domains:           []Domain{{DName: zone}},
 		SubDomain:         recordName,
+		Content:           recordValue, // Значение записи (например, IP-адрес)
+		RecordType:        recordType,  // Тип записи (A, CNAME и т.д.)
 		OutputContentType: "plain",
 	}
 
