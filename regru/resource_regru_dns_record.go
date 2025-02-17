@@ -39,16 +39,14 @@ func resourceRegruDNSRecord() *schema.Resource {
 }
 
 func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
-	// Получаем данные из Terraform
+
 	recordType := d.Get("type").(string)
 	recordName := d.Get("name").(string)
 	value := d.Get("record").(string)
 	zone := d.Get("zone").(string)
 
-	// Получаем клиент из метаданных
 	c := m.(*Client)
 
-	// Базовый запрос
 	baseRequest := CreateRecordRequest{
 		Username:          c.username,
 		Password:          c.password,
@@ -57,7 +55,6 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 		OutputContentType: "plain",
 	}
 
-	// Формируем запрос в зависимости от типа записи
 	var request interface{}
 	switch strings.ToUpper(recordType) {
 	case "A":
@@ -99,18 +96,15 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("invalid record type '%s'", recordType)
 	}
 
-	// Выполняем запрос к API
 	resp, err := c.doRequest(request, "zone", "add_alias") // Явно указываем путь
 	if err != nil {
 		return fmt.Errorf("failed to create DNS record: %w", err)
 	}
 
-	// Проверяем наличие ошибок в ответе
 	if resp.HasError() != nil {
 		return fmt.Errorf("API error: %w", resp.HasError())
 	}
 
-	// Устанавливаем ID ресурса в Terraform
 	recordID := generateRecordID(recordName, zone)
 	d.SetId(recordID)
 
@@ -127,98 +121,33 @@ func resourceRegruDNSRecordRead(_ *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
-//	func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
-//		record_type := d.Get("type").(string)
-//		record_name := d.Get("name").(string)
-//		value := d.Get("record").(string)
-//		zone := d.Get("zone").(string)
-//
-//		c := m.(*Client)
-//
-//		request := DeleteRecordRequest{
-//			Username:          c.username,
-//			Password:          c.password,
-//			Domains:           []Domain{{DName: zone}},
-//			SubDomain:         record_name,
-//			Content:           value,
-//			RecordType:        strings.ToUpper(record_type),
-//			OutputContentType: "plain",
-//		}
-//
-//		resp, err := c.doRequest(request, "zone", "remove_record")
-//		if err != nil {
-//			return err
-//		}
-//
-//		return resp.HasError()
-//	}
-//
-//	func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
-//		// Получаем данные из Terraform
-//		recordName := d.Get("name").(string)
-//		zone := d.Get("zone").(string)
-//
-//		// Получаем клиент из метаданных
-//		c := m.(*Client)
-//
-//		// Формируем запрос для удаления записи
-//		request := DeleteRecordRequest{
-//			Username:          c.username,
-//			Password:          c.password,
-//			Domains:           []Domain{{DName: zone}},
-//			SubDomain:         recordName,
-//			OutputContentType: "plain",
-//		}
-//
-//		// Выполняем запрос к API
-//		resp, err := c.doRequest(request, "zone", "remove_record") // Правильный путь
-//		if err != nil {
-//			return fmt.Errorf("failed to delete DNS record: %w", err)
-//		}
-//
-//		// Проверяем наличие ошибок в ответе
-//		if resp.HasError() != nil {
-//			return fmt.Errorf("API error: %w", resp.HasError())
-//		}
-//
-//		// Удаляем ID ресурса в Terraform
-//		d.SetId("")
-//
-//		return nil
-//	}
 func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
-	// Получаем данные из Terraform
 	recordName := d.Get("name").(string)
 	zone := d.Get("zone").(string)
 	recordType := d.Get("type").(string)
 	recordValue := d.Get("record").(string)
 
-	// Получаем клиент из метаданных
 	c := m.(*Client)
 
-	// Формируем запрос для удаления записи
 	request := DeleteRecordRequest{
 		Username:          c.username,
 		Password:          c.password,
 		Domains:           []Domain{{DName: zone}},
 		SubDomain:         recordName,
-		Content:           recordValue, // Значение записи (например, IP-адрес)
-		RecordType:        recordType,  // Тип записи (A, CNAME и т.д.)
+		Content:           recordValue,
+		RecordType:        recordType,
 		OutputContentType: "plain",
 	}
 
-	// Выполняем запрос к API
-	resp, err := c.doRequest(request, "zone", "remove_record") // Правильный путь
+	resp, err := c.doRequest(request, "zone", "remove_record")
 	if err != nil {
 		return fmt.Errorf("failed to delete DNS record: %w", err)
 	}
 
-	// Проверяем наличие ошибок в ответе
 	if resp.HasError() != nil {
 		return fmt.Errorf("API error: %w", resp.HasError())
 	}
 
-	// Удаляем ID ресурса в Terraform
 	d.SetId("")
 
 	return nil
