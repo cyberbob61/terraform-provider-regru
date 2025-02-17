@@ -1,12 +1,11 @@
 package regru
 
 import (
-	"errors"
+	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
-
-const defaultApiEndpoint = "https://api.reg.ru/api/regru2/"
 
 func Provider() *schema.Provider {
 	return &schema.Provider{
@@ -26,8 +25,7 @@ func Provider() *schema.Provider {
 			},
 			"api_endpoint": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     defaultApiEndpoint,
+				Optional:    true, // Оставляем Optional, но убираем Default
 				Description: "reg.ru API endpoint",
 			},
 			"cert_file": {
@@ -57,14 +55,19 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 	certFile := d.Get("cert_file").(string)
 	keyFile := d.Get("key_file").(string)
 
-	if (username != "") && (password != "") {
-		c, err := NewClient(username, password, endpoint, certFile, keyFile)
-		if err != nil {
-			return nil, err
-		}
-
-		return c, nil
+	if username == "" || password == "" {
+		return nil, fmt.Errorf("api_username and api_password are required")
+	}
+	if endpoint == "" {
+		return nil, fmt.Errorf("api_endpoint is required")
 	}
 
-	return nil, errors.New("empty username and password not allowed")
+	client, err := NewClient(username, password, endpoint, certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %w", err)
+	}
+
+	log.Printf("Regru client created for user: %s", username)
+
+	return client, nil
 }

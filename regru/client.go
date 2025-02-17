@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -35,10 +36,6 @@ func loadTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 }
 
 func NewClient(username, password, apiEndpoint, certFile, keyFile string) (*Client, error) {
-	if apiEndpoint == "" {
-		apiEndpoint = defaultApiEndpoint
-	}
-
 	baseURL, err := url.Parse(apiEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse API endpoint: %w", err)
@@ -63,44 +60,79 @@ func NewClient(username, password, apiEndpoint, certFile, keyFile string) (*Clie
 	return client, nil
 }
 
-func (c Client) doRequest(request any, fragments ...string) (*APIResponse, error) {
-	endpoint := c.baseURL.JoinPath(fragments...)
+func (c Client) doRequest(request interface{}, path ...string) (*APIResponse, error) {
+	endpoint := c.baseURL.JoinPath(path...)
 
 	inputData, err := json.Marshal(request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create input data: %w", err)
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	query := endpoint.Query()
-	query.Add("input_data", string(inputData))
-	query.Add("input_format", "json")
-	endpoint.RawQuery = query.Encode()
+	fmt.Println("Request JSON:", string(inputData))
 
-	req, err := http.NewRequest(http.MethodGet, endpoint.String(), http.NoBody)
+	var requestData map[string]any
+	if err := json.Unmarshal(inputData, &requestData); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal request data: %w", err)
+	}
+
+	formData := url.Values{}
+	for key, value := range requestData {
+		switch v := value.(type) {
+		case []any:
+			for _, item := range v {
+				if m, ok := item.(map[string]any); ok {
+					if dname, exists := m["dname"]; exists {
+						formData.Add("domain_name", fmt.Sprintf("%v", dname))
+					}
+				} else {
+					formData.Add(key, fmt.Sprintf("%v", item))
+				}
+			}
+		case map[string]any:
+			if dname, exists := v["dname"]; exists {
+				formData.Add("domain_name", fmt.Sprintf("%v", dname))
+			} else {
+				for subKey, subValue := range v {
+					formData.Add(fmt.Sprintf("%s.%s", key, subKey), fmt.Sprintf("%v", subValue))
+				}
+			}
+		default:
+			formData.Add(key, fmt.Sprintf("%v", v))
+		}
+	}
+
+	fmt.Println("Form Data:", formData.Encode())
+
+	req, err := http.NewRequest(http.MethodPost, endpoint.String(), strings.NewReader(formData.Encode()))
 	if err != nil {
-		return nil, fmt.Errorf("unable to create request: %w", err)
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := c.HTTPClient.Do(req)
+	fmt.Println("Request Headers:", req.Header)
+
+	httpClient := c.HTTPClient
+	resp, err := httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
 	}
-
 	defer func() { _ = resp.Body.Close() }()
+
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	fmt.Println("Response Status:", resp.Status)
+	fmt.Println("Response Body:", string(raw))
 
 	if resp.StatusCode/100 != 2 {
 		return nil, parseError(req, resp)
 	}
 
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
 	var apiResp APIResponse
-	err = json.Unmarshal(raw, &apiResp)
-	if err != nil {
-		return nil, err
+	if err := json.Unmarshal(raw, &apiResp); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal API response: %w", err)
 	}
 
 	return &apiResp, nil

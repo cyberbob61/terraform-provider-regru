@@ -39,38 +39,42 @@ func resourceRegruDNSRecord() *schema.Resource {
 }
 
 func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
-	record_type := d.Get("type").(string)
-	record_name := d.Get("name").(string)
+
+	recordType := d.Get("type").(string)
+	recordName := d.Get("name").(string)
 	value := d.Get("record").(string)
 	zone := d.Get("zone").(string)
 
 	c := m.(*Client)
+
 	baseRequest := CreateRecordRequest{
 		Username:          c.username,
 		Password:          c.password,
 		Domains:           []Domain{{DName: zone}},
-		SubDomain:         record_name,
+		SubDomain:         recordName,
 		OutputContentType: "plain",
 	}
 
 	var request interface{}
-
-	switch strings.ToUpper(record_type) {
+	switch strings.ToUpper(recordType) {
 	case "A":
 		request = CreateARecordRequest{
 			CreateRecordRequest: baseRequest,
 			IPAddr:              value,
 		}
+
 	case "AAAA":
 		request = CreateAAAARecordRequest{
 			CreateRecordRequest: baseRequest,
 			IPAddr:              value,
 		}
+
 	case "CNAME":
 		request = CreateCnameRecordRequest{
 			CreateRecordRequest: baseRequest,
 			CanonicalName:       value,
 		}
+
 	case "MX":
 		fields := strings.Fields(value)
 		if len(fields) != 2 {
@@ -81,40 +85,47 @@ func resourceRegruDNSRecordCreate(d *schema.ResourceData, m interface{}) error {
 			MailServer:          fields[1],
 			Priority:            fields[0],
 		}
+
 	case "TXT":
 		request = CreateTxtRecordRequest{
 			CreateRecordRequest: baseRequest,
 			Text:                value,
 		}
+
 	default:
-		return fmt.Errorf("invalid record type '%s'", record_type)
+		return fmt.Errorf("invalid record type '%s'", recordType)
 	}
 
-	action := fmt.Sprintf("add_%s", strings.ToLower(record_type))
-	if strings.ToLower(record_type) == "a" {
-		action = "add_alias"
-	}
-
-	resp, err := c.doRequest(request, "zone", action)
+	resp, err := c.doRequest(request, "zone", "add_alias") // Явно указываем путь
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create DNS record: %w", err)
 	}
+
 	if resp.HasError() != nil {
-		return resp.HasError()
+		return fmt.Errorf("API error: %w", resp.HasError())
 	}
-	d.SetId(strings.Join([]string{record_name, zone}, "."))
+
+	recordID := generateRecordID(recordName, zone)
+	d.SetId(recordID)
+
 	return nil
 }
 
-func resourceRegruDNSRecordRead(d *schema.ResourceData, m interface{}) error {
+func generateRecordID(recordName, zone string) string {
+	return fmt.Sprintf("%s.%s", recordName, zone)
+}
+
+func resourceRegruDNSRecordRead(_ *schema.ResourceData, _ interface{}) error {
+	// Placeholder: function not implemented yet
+	// func resourceRegruDNSRecordRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
 func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
-	record_type := d.Get("type").(string)
-	record_name := d.Get("name").(string)
-	value := d.Get("record").(string)
+	recordName := d.Get("name").(string)
 	zone := d.Get("zone").(string)
+	recordType := d.Get("type").(string)
+	recordValue := d.Get("record").(string)
 
 	c := m.(*Client)
 
@@ -122,16 +133,22 @@ func resourceRegruDNSRecordDelete(d *schema.ResourceData, m interface{}) error {
 		Username:          c.username,
 		Password:          c.password,
 		Domains:           []Domain{{DName: zone}},
-		SubDomain:         record_name,
-		Content:           value,
-		RecordType:        strings.ToUpper(record_type),
+		SubDomain:         recordName,
+		Content:           recordValue,
+		RecordType:        recordType,
 		OutputContentType: "plain",
 	}
 
 	resp, err := c.doRequest(request, "zone", "remove_record")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete DNS record: %w", err)
 	}
 
-	return resp.HasError()
+	if resp.HasError() != nil {
+		return fmt.Errorf("API error: %w", resp.HasError())
+	}
+
+	d.SetId("")
+
+	return nil
 }
